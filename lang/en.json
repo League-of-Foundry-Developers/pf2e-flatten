@@ -1,0 +1,10 @@
+{
+	"pf2e-flatten": {
+		"settings": {
+			"autoflatten": {
+				"name": "Automatically Flatten NPCs",
+				"hint": "If enabled, any new NPCs dragged in from the compendiums will automatically be flattened."
+			}
+			}
+		}
+	}
