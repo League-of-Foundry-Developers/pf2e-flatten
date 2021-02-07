@@ -18,7 +18,7 @@
     "systems": ["pf2e"],
     "compatibleCoreVersion": "0.7.5",
     "minimumCoreVersion": "0.7.9",
-    "manifest": "https://raw.githubusercontent.com/Djphoenix719/FVTT-PF2EToolbox/master/module.json",
-    "download": "https://github.com/Djphoenix719/FVTT-PF2EToolbox/releases/download/v1.5.4/pf2e-toolbox-v1.5.4.zip",
-    "url": "https://github.com/Djphoenix719/FVTT-PF2EToolbox"
+    "manifest": "https://raw.githubusercontent.com/velara/pf2e-flatten/master/module.json",
+    "download": "https://github.com/velara/pf2e-flatten/archive/v0.1.zip",
+    "url": "https://github.com/Velara/pf2e-flatten/"
 }
