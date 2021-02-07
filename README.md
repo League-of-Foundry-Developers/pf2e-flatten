@@ -8,6 +8,7 @@ The module also adds toggleable functionality to automatically flatten any NPCs 
 
 Note: the flattening is based on the NPCs current level, which means if you adjust the NPCs level prior to unflattening the resulting NPC will have different stats than the original to reflect its new level. 
 
+The DCs of recall knowledge checks for NPCs are presently handled automatically by the Proficiency without Level variant rule built into the PF2e core system. 
 
 This module falls under the Apache 2.0 License, and would not have been possible without the foundtions developed by DJphoenix719 in their PF2e-Toolbox module.
 
