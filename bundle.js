@@ -1,3 +1,4 @@
+// This file has been modified from the original PF2e toolbox module.
 const settingsKey = "pf2e-flatten";
 
 function registerSettings() {
