@@ -1,6 +1,6 @@
 {
     "name": "pf2e-flatten",
-    "title": "Proficiency Without Level for PF2E",
+    "title": "PF2e Automatic NPC Proficiency Without Level",
     "description": "A utility to flatten NPCs to make them compatible with the proficiency without level variant rule.",
     "version": "0.1.1",
     "author": "Velara [Avery#9136]",
