@@ -1,6 +1,6 @@
 # pf2e-flatten
 
-![Latest Release Download Count](https://img.shields.io/github/downloads/velara/pf2e-flatten/v0.1.2.zip/total)
+![Latest Release Download Count](https://img.shields.io/github/downloads/velara/pf2e-flatten/v0.1.2/total)
 
 A module to apply the proficiency without level changes to PF2e NPCs in FoundryVTT. This module overhauls the NPC Flattening function from the excellent PF2e-Toolbox https://github.com/Djphoenix719/FVTT-PF2EToolbox/releases module, to make it compatible with the new NPC character sheets. If you are switching over from the PF2e toolbox to this module, you will need to unflatten any NPCs flattened with the Toolbox module and reflatten them with this module.  
 
