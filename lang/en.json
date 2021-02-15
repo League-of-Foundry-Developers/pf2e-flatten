@@ -4,7 +4,12 @@
 			"autoflatten": {
 				"name": "Automatically Flatten NPCs",
 				"hint": "If enabled, any new NPCs dragged in from the compendiums will automatically be flattened."
+			},
+			"halflevel": {
+				"name": "Half Level Proficiency",
+				"hint": "If enabled, all of the flattening functions will use half level, rounded up rather than proficiency without level."
 			}
 			}
 		}
 	}
+
