@@ -42,7 +42,7 @@ if (game.settings.get("pf2e-flatten", "version") === 0.12){
 async function upgradeActors() {
 	for (const actor of game.actors.entities) {
 		if (actor.data.type === "npc"){
-		if (typeof actor.data.data.customModifiers['all'] !== undefined){
+		if (actor.data.data.customModifiers['all'] !== undefined){
      await upgradeActorsInner(actor)
 		};
  };
