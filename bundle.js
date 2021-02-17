@@ -39,14 +39,12 @@ if (game.settings.get("pf2e-flatten", "version") === 0.12){
 };
 });
 
-function upgradeActors() {
+async function upgradeActors() {
 	for (const actor of game.actors.entities) {
 		if (actor.data.type === "npc"){
-		if (typeof actor.data.data.customModifiers !== undefined){
 		if (typeof actor.data.data.customModifiers['all'] !== undefined){
-     upgradeActorsInner(actor)
+     await upgradeActorsInner(actor)
 		};
-	};
  };
 };
 	game.settings.set("pf2e-flatten", "version", 0.13), ui.notifications.info(`PF2E-Flatten Migration to version 0.13 completed!`, {
@@ -58,13 +56,18 @@ async function upgradeActorsInner (actor) {
 	const modifierName = 'Flattened Proficiency';
 	for(var i=0, len= actor.data.data.customModifiers['all'].length; i<len; i++){
 		if(actor.data.data.customModifiers['all'][i].name === modifierName){
-			actor.removeCustomModifier('all', modifierName);
-			actor.setFlag("pf2e-flatten", "flattened", {value: true});
-			actor.setFlag("pf2e-flatten", "flattenvalue", {value: actor.data.data.details.level.value});
+		  await upgradeFlags(actor, modifierName);
 		};
 	};
+	return 1;
 }
 
+async function upgradeFlags (actor, modifierName){
+	await actor.removeCustomModifier('all', modifierName);
+	await actor.setFlag("pf2e-flatten", "flattened", {value: true});
+	await actor.setFlag("pf2e-flatten", "flattenvalue", {value: actor.data.data.details.level.value});
+	return 1;
+}
 
 
 
@@ -73,12 +76,13 @@ Hooks.on('getActorDirectoryEntryContext', onFlattenProficiencyContextHook);
 Hooks.on('createActor', AutoFlattenNPC );
 
 function AutoFlattenNPC(li){
-			var dontflatten = 0;
-      const modifierName = 'Flattened Proficiency';
+		var dontflatten = 0;
+    const modifierName = 'Flattened Proficiency';
 		if(game.settings.get(settingsKey, "autoflatten") === true){
       const id = li.data._id;
       const actor = game.actors.get(id);
-      if(actor.data.data.attributes.ac.value > 0 && actor.data.type === 'npc'){
+			if(actor.data.type === 'npc'){
+       if(actor.data.data.attributes.ac.value > 0 && actor.data.type === 'npc'){
  				if (actor.getFlag("pf2e-flatten", "flattened") !== undefined){
 					if (actor.getFlag("pf2e-flatten", "flattened").value === true){
 						var dontflatten = 1
@@ -167,6 +171,7 @@ function AutoFlattenNPC(li){
       actor.updateEmbeddedEntity('OwnedItem', itemUpdates);
   };
  };
+};
 };
 }
 
@@ -275,10 +280,10 @@ function onFlattenProficiencyContextHook(html, buttons) {
         callback: async (li) => {
             const id = li.data('entity-id');
             const actor = game.actors.get(id);
-		var level = actor.getFlag("pf2e-flatten", "flattenvalue").value
-		if(level < 0) {level = 0};
-		actor.setFlag("pf2e-flatten", "flattened", {value: false});
-		actor.setFlag("pf2e-flatten", "flattenvalue", {value: level});
+						var level = actor.getFlag("pf2e-flatten", "flattenvalue").value
+						if(level < 0) {level = 0};
+						actor.setFlag("pf2e-flatten", "flattened", {value: false});
+						actor.setFlag("pf2e-flatten", "flattenvalue", {value: level});
 
 
             const ac = parseInt(actor.data.data.attributes.ac.base);
