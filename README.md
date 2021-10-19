@@ -4,7 +4,7 @@ A module to apply the proficiency without level changes to PF2e NPCs in FoundryV
 
 This modules adds a new menu option when you right click on any NPC in your actor directory that allows you to flatten them. Which is to say it subtracts their current level from saves, skills, attacks and spell DCs. It also has a corresponding function that allows you to reverse that process.
 
-Additionally support for the half-level proficiency (rounded up) in now available. 
+Additionally support for the half-level proficiency (rounded up) is now available. 
 
 The module also adds toggleable functionality to automatically flatten any NPCs that you drag out of a compendium into your world. This automatic flattening won't affect new NPC you create from scratch, instead if you are manually entering NPC stats that you need to flatten, you can flatten them using the context menu above. Furthermore, if you store any of your flattened NPCs in compendiums the automatic flattening functionality will skip them when you reimport them into your active world.
 
