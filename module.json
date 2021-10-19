@@ -16,8 +16,8 @@
     "styles": ["./bundle.css"],
     "socket": true,
     "systems": ["pf2e"],
-    "compatibleCoreVersion": "0.7.9",
-    "minimumCoreVersion": "0.7.5",
+    "compatibleCoreVersion": "0.8.9",
+    "minimumCoreVersion": "0.8.8",
     "manifest": "https://raw.githubusercontent.com/velara/pf2e-flatten/master/module.json",
     "download": "https://github.com/velara/pf2e-flatten/archive/v0.2.0.zip",
     "url": "https://github.com/Velara/pf2e-flatten/"
