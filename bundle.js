@@ -42,8 +42,8 @@ async function AutoFlattenNPC(li){
 
 async function onFlattenProficiencyContextHook(html, buttons) {
 const modifierName = game.settings.get(settingsKey, "halflevel") ? '1/2 Level Proficiency' :'Proficiency Without Level';
-const modifierUnSlug = game.settings.get(settingsKey, "halflevel") ? 'proficiency-without-level': '1/2-level-proficiency' ;
-const modifierSlug = game.settings.get(settingsKey, "halflevel") ? '1/2-level-proficiency' : 'proficiency-without-level'
+const modifierUnSlug = game.settings.get(settingsKey, "halflevel") ? 'proficiency-without-level': '1-2-level-proficiency' ;
+const modifierSlug = game.settings.get(settingsKey, "halflevel") ? '1-2-level-proficiency' : 'proficiency-without-level'
 const hasModifier = (actor) => {
 		const data = actor.data.data;
 		if (data.customModifiers && data.customModifiers.all) {
@@ -69,7 +69,7 @@ const hasModifier = (actor) => {
 						const actor = game.actors.get(id);
 						const level = game.settings.get(settingsKey, "halflevel") ? Math.max(Math.floor(parseInt(actor?.data.data['details'].level.value)/2), 0) : Math.max(parseInt(actor?.data.data['details'].level.value),0);
 						await actor.addCustomModifier('all', modifierName, -level, 'untyped');
-						await actor.removeCustomModifier('all', modifierUnName);
+						await actor.removeCustomModifier('all', modifierUnSlug);
 					}
 		});
 		buttons.unshift({
