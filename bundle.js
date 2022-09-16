@@ -17,6 +17,14 @@ game.settings.register(settingsKey, "halflevel", {
 	config: true,
 	type: Boolean,
 	default: false
+}),
+game.settings.register(settingsKey, "halflevelPC", {
+	name: "pf2e-flatten.settings.halflevelPC.name",
+	hint: "pf2e-flatten.settings.halflevelPC.hint",
+	scope: "world",
+	config: true,
+	type: Boolean,
+	default: false
 })
 };
 
@@ -34,9 +42,13 @@ async function AutoFlattenNPC(li){
     const id = li.data._id;
     const actor = game.actors.get(id);
     if(actor.data.type === 'npc'){
-			const level = game.settings.get(settingsKey, "halflevel") ? Math.max(Math.floor(parseInt(actor?.data.data['details'].level.value)/2), 0) : Math.max(parseInt(actor?.data.data['details'].level.value),0);
+			const level = game.settings.get(settingsKey, "halflevel") ? Math.max(Math.floor(parseInt(actor?.system['details'].level.value)/2), 0) : Math.max(parseInt(actor?.system['details'].level.value),0);
 			await actor.addCustomModifier('all', modifierName, -level, 'untyped');
     }
+		if(actor.data.type === 'character' && game.settings.get(settingsKey, "halflevelPC")){
+			const level =  Math.max(Math.floor(parseInt(actor?.system['details'].level.value)/2), 0);
+			await actor.addCustomModifier('all', modifierName, -level, 'untyped');
+		}
  }
 }
 
@@ -45,7 +57,7 @@ const modifierName = game.settings.get(settingsKey, "halflevel") ? '1/2 Level Pr
 const modifierUnSlug = game.settings.get(settingsKey, "halflevel") ? 'proficiency-without-level': '1-2-level-proficiency' ;
 const modifierSlug = game.settings.get(settingsKey, "halflevel") ? '1-2-level-proficiency' : 'proficiency-without-level'
 const hasModifier = (actor) => {
-		const data = actor.data.data;
+		const data = actor.system;
 		if (data.customModifiers && data.customModifiers.all) {
 				const all = data.customModifiers.all;
 				for (const modifier of all) {
@@ -62,12 +74,17 @@ const hasModifier = (actor) => {
 				condition: (li) => {
 						const id = li.data('document-id');
 						const actor = game.actors.get(id);
+						if(game.settings.get(settingsKey, "halflevelPC")){
+							return !hasModifier(actor);
+						}
+						else{
 						return actor?.data.type === 'npc' && !hasModifier(actor);
+					  }
 				},
 				callback: async (li) => {
 						const id = li.data('document-id');
 						const actor = game.actors.get(id);
-						const level = game.settings.get(settingsKey, "halflevel") ? Math.max(Math.floor(parseInt(actor?.data.data['details'].level.value)/2), 0) : Math.max(parseInt(actor?.data.data['details'].level.value),0);
+						const level = game.settings.get(settingsKey, "halflevel") ? Math.max(Math.floor(parseInt(actor?.system['details'].level.value)/2), 0) : Math.max(parseInt(actor?.system['details'].level.value),0);
 						await actor.addCustomModifier('all', modifierName, -level, 'untyped');
 						await actor.removeCustomModifier('all', modifierUnSlug);
 					}
@@ -78,7 +95,12 @@ const hasModifier = (actor) => {
 				condition: (li) => {
 						const id = li.data('document-id');
 						const actor = game.actors.get(id);
+						if(game.settings.get(settingsKey, "halflevelPC")){
+							return hasModifier(actor);
+						}
+						else{
 						return actor?.data.type === 'npc' && hasModifier(actor);
+						}
 				},
 				callback: async (li) => {
 						const id = li.data('document-id');
