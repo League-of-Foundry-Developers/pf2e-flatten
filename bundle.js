@@ -1,6 +1,7 @@
 // This file has been modified from the original PF2e toolbox module.
 const settingsKey = "pf2e-flatten";
 const pf2eFlattenModifierName = 'Proficiency Without Level';
+const pf2eHalfFlattenModifierName = 'Half Level Proficiency';
 
 const wordCharacter = String.raw`[\p{Alphabetic}\p{Mark}\p{Decimal_Number}\p{Join_Control}]`
 	, nonWordCharacter = String.raw`[^\p{Alphabetic}\p{Mark}\p{Decimal_Number}\p{Join_Control}]`
@@ -49,13 +50,15 @@ async function AutoFlattenNPC(li) {
 	if (game.settings.get(settingsKey, "autoflatten") === true) {
 		const id = li._id;
 		const actor = game.actors.get(id);
+		const halfLevel = game.settings.get(settingsKey, "halflevel");
+		const modifierName = halfLevel ? pf2eHalfFlattenModifierName : pf2eFlattenModifierName
 		if (actor.type === 'npc') {
-			const level = game.settings.get(settingsKey, "halflevel") ? Math.max(Math.floor(parseInt(actor?.system['details'].level.value) / 2), 0) : Math.max(parseInt(actor?.system['details'].level.value), 0);
-			await actor.addCustomModifier('all', pf2eFlattenModifierName, -level, 'untyped');
+			const level = halfLevel ? Math.max(Math.floor(parseInt(actor?.system['details'].level.value) / 2), 0) : Math.max(parseInt(actor?.system['details'].level.value), 0);
+			await actor.addCustomModifier('all', modifierName, -level, 'untyped');
 		}
 		if (actor.type === 'character' && game.settings.get(settingsKey, "halflevelPC")) {
 			const level = Math.max(Math.floor(parseInt(actor?.system['details'].level.value) / 2), 0);
-			await actor.addCustomModifier('all', pf2eFlattenModifierName, -level, 'untyped');
+			await actor.addCustomModifier('all', modifierName, -level, 'untyped');
 		}
 	}
 }
@@ -66,7 +69,7 @@ async function onFlattenProficiencyContextHook(html, buttons) {
 		if (data.customModifiers && data.customModifiers.all) {
 			const all = data.customModifiers.all;
 			for (const modifier of all) {
-				if (modifier.label === pf2eFlattenModifierName) {
+				if (modifier.label === pf2eFlattenModifierName || modifier.label === pf2eHalfFlattenModifierName) {
 					return true;
 				}
 			}
@@ -89,8 +92,10 @@ async function onFlattenProficiencyContextHook(html, buttons) {
 		callback: async (li) => {
 			const id = li.data('document-id');
 			const actor = game.actors.get(id);
-			const level = game.settings.get(settingsKey, "halflevel") ? Math.max(Math.floor(parseInt(actor?.system['details'].level.value) / 2), 0) : Math.max(parseInt(actor?.system['details'].level.value), 0);
-			await actor.addCustomModifier('all', pf2eFlattenModifierName, -level, 'untyped');
+			const halfLevel = game.settings.get(settingsKey, "halflevel");
+			const level = halfLevel ? Math.max(Math.floor(parseInt(actor?.system['details'].level.value) / 2), 0) : Math.max(parseInt(actor?.system['details'].level.value), 0);
+			const modifierName = halfLevel ? pf2eHalfFlattenModifierName : pf2eFlattenModifierName
+			await actor.addCustomModifier('all', modifierName, -level, 'untyped');
 		}
 	});
 	buttons.unshift({
@@ -109,7 +114,9 @@ async function onFlattenProficiencyContextHook(html, buttons) {
 		callback: async (li) => {
 			const id = li.data('document-id');
 			const actor = game.actors.get(id);
-			const slug = pf2eFlattenModifierName.replace(lowerCaseThenUpperCaseRE, "$1-$2").toLowerCase().replace(/['’]/g, "").replace(nonWordCharacterRE, " ").trim().replace(/[-\s]+/g, "-")
+			const halfLevel = game.settings.get(settingsKey, "halflevel");
+			const modifierName = halfLevel ? pf2eHalfFlattenModifierName : pf2eFlattenModifierName
+			const slug = modifierName.replace(lowerCaseThenUpperCaseRE, "$1-$2").toLowerCase().replace(/['’]/g, "").replace(nonWordCharacterRE, " ").trim().replace(/[-\s]+/g, "-")
 			await actor.removeCustomModifier('all', slug);
 		},
 	});
