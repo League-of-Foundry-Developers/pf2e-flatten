@@ -1,26 +1,26 @@
 // This file has been modified from the original PF2e toolbox module.
-const settingsKey = "pf2e-flatten-copy";
+const settingsKey = "pf2e-flatten";
 
 function registerSettings() {
 	game.settings.register(settingsKey, "autoflatten", {
-		name: "pf2e-flatten-copy.settings.autoflatten.name",
-		hint: "pf2e-flatten-copy.settings.autoflatten.hint",
+		name: "pf2e-flatten.settings.autoflatten.name",
+		hint: "pf2e-flatten.settings.autoflatten.hint",
 		scope: "world",
 		config: true,
 		type: Boolean,
 		default: false
 }),
 game.settings.register(settingsKey, "halflevel", {
-	name: "pf2e-flatten-copy.settings.halflevel.name",
-	hint: "pf2e-flatten-copy.settings.halflevel.hint",
+	name: "pf2e-flatten.settings.halflevel.name",
+	hint: "pf2e-flatten.settings.halflevel.hint",
 	scope: "world",
 	config: true,
 	type: Boolean,
 	default: false
 }),
 game.settings.register(settingsKey, "halflevelPC", {
-	name: "pf2e-flatten-copy.settings.halflevelPC.name",
-	hint: "pf2e-flatten-copy.settings.halflevelPC.hint",
+	name: "pf2e-flatten.settings.halflevelPC.name",
+	hint: "pf2e-flatten.settings.halflevelPC.hint",
 	scope: "world",
 	config: true,
 	type: Boolean,
