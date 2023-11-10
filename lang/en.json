@@ -1,19 +1,18 @@
 {
-	"pf2e-flatten": {
-		"settings": {
-			"autoflatten": {
-				"name": "Automatically Flatten NPCs",
-				"hint": "If enabled, any new NPCs dragged in from the compendiums will automatically be flattened."
-			},
-			"halflevel": {
-				"name": "Half Level Proficiency",
-				"hint": "If enabled, all of the flattening functions will use half level, rounded up rather than proficiency without level."
-			},
-			"halflevelPC": {
-				"name": "Half Level Proficiency for PCs",
-				"hint": "If enabled, all of the flattening functions will work for PCs."
-			}
-			}
-		}
-	}
-
+    "pf2e-flatten": {
+        "settings": {
+            "autoflatten": {
+                "name": "Automatically Flatten NPCs",
+                "hint": "If enabled, any new NPCs dragged in from the compendiums will automatically be flattened."
+            },
+            "halflevel": {
+                "name": "Half Level Proficiency",
+                "hint": "If enabled, all of the flattening functions will use half level, rounded up rather than proficiency without level."
+            },
+            "halflevelPC": {
+                "name": "Half Level Proficiency for PCs",
+                "hint": "If enabled, all of the flattening functions will work for PCs."
+            }
+        }
+    }
+}

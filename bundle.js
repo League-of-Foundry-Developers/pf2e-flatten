@@ -45,6 +45,11 @@ Hooks.once("init", () => {
 
 Hooks.on('createActor', AutoFlattenNPC);
 Hooks.on('getActorDirectoryEntryContext', onFlattenProficiencyContextHook);
+Hooks.on('renderActorDirectory', addFlattenUnflattenButton);
+
+async function addFlattenUnflattenButton(cc, [html], opts) {
+	console.log(cc, html, opts);
+}
 
 async function AutoFlattenNPC(li) {
 	if (game.settings.get(settingsKey, "autoflatten") === true) {
@@ -53,11 +58,11 @@ async function AutoFlattenNPC(li) {
 		const halfLevel = game.settings.get(settingsKey, "halflevel");
 		const modifierName = halfLevel ? pf2eHalfFlattenModifierName : pf2eFlattenModifierName
 		if (actor.type === 'npc') {
-			const level = halfLevel ? Math.max(Math.floor(parseInt(actor?.system['details'].level.value) / 2), 0) : Math.max(parseInt(actor?.system['details'].level.value), 0);
+			const level = halfLevel ? Math.max(Math.ceil(parseInt(actor?.system['details'].level.value) / 2), 0) : Math.max(parseInt(actor?.system['details'].level.value), 0);
 			await actor.addCustomModifier('all', modifierName, -level, 'untyped');
 		}
 		if (actor.type === 'character' && game.settings.get(settingsKey, "halflevelPC")) {
-			const level = Math.max(Math.floor(parseInt(actor?.system['details'].level.value) / 2), 0);
+			const level = Math.max(Math.ceil(parseInt(actor?.system['details'].level.value) / 2), 0);
 			await actor.addCustomModifier('all', modifierName, -level, 'untyped');
 		}
 	}
@@ -76,6 +81,7 @@ async function onFlattenProficiencyContextHook(html, buttons) {
 		}
 		return false;
 	};
+
 	buttons.unshift({
 		name: 'PF2e Flatten NPC',
 		icon: '<i class="fas fa-level-down-alt"></i>',
@@ -93,7 +99,7 @@ async function onFlattenProficiencyContextHook(html, buttons) {
 			const id = li.data('document-id');
 			const actor = game.actors.get(id);
 			const halfLevel = game.settings.get(settingsKey, "halflevel");
-			const level = halfLevel ? Math.max(Math.floor(parseInt(actor?.system['details'].level.value) / 2), 0) : Math.max(parseInt(actor?.system['details'].level.value), 0);
+			const level = halfLevel ? Math.max(Math.ceil(parseInt(actor?.system['details'].level.value) / 2), 0) : Math.max(parseInt(actor?.system['details'].level.value), 0);
 			const modifierName = halfLevel ? pf2eHalfFlattenModifierName : pf2eFlattenModifierName
 			await actor.addCustomModifier('all', modifierName, -level, 'untyped');
 		}
