@@ -101,17 +101,19 @@ Hooks.on('renderActorDirectory', async (cc, [html], opts) => {
 	});
 });
 
-Hooks.on('createActor', async li => {
+Hooks.on('createActor', async (actor) => {
 	if (game.settings.get(settingsKey, "autoflatten") === true) {
-		const id = li._id;
-		const actor = game.actors.get(id);
 		await flattenActor(actor);
 	}
 });
 
-// Hoosk.on('updateDocument', async (document, change, options, userId) => {
-// 	console.log(document, change, options, userId);
-// });
+Hooks.on('updateActor', async (actor) => {
+	if (hasModifier(actor) && getFlatteningValue(actor) !== computeFlatteningValue(actor)) {
+		await unflattenActor(actor);
+		await flattenActor(actor);
+		ui.notifications.info(`Re applied flattening for actor ${actor?.name} (${actor?.id})`)
+	}
+});
 
 Hooks.on('getActorDirectoryEntryContext', async (html, entryOptions) => {
 	entryOptions.unshift({
@@ -175,21 +177,40 @@ function hasModifier(actor) {
 	return false;
 };
 
+function getFlatteningValue(actor) {
+	const data = actor.system;
+	if (data.customModifiers && data.customModifiers.all) {
+		const all = data.customModifiers.all;
+		for (const modifier of all) {
+			if (modifier.label === pf2eFlattenModifierName || modifier.label === pf2eHalfFlattenModifierName) {
+				return modifier.modifier;
+			}
+		}
+	}
+	return undefined;
+};
+
 async function flattenActor(actor) {
 	const halfLevel = game.settings.get(settingsKey, "halflevel");
-	const modifierName = halfLevel ? pf2eHalfFlattenModifierName : pf2eFlattenModifierName
-	if (actor.type === 'npc') {
-		const level = halfLevel ? Math.max(Math.ceil(parseInt(actor?.system['details'].level.value) / 2), 0) : Math.max(parseInt(actor?.system['details'].level.value), 0);
-		await actor.addCustomModifier('all', modifierName, -level, 'untyped');
-	}
-	if (actor.type === 'character' && game.settings.get(settingsKey, "halflevelPC")) {
-		const level = Math.max(Math.ceil(parseInt(actor?.system['details'].level.value) / 2), 0);
-		await actor.addCustomModifier('all', modifierName, -level, 'untyped');
-	}
+	const modifierName = halfLevel ? pf2eHalfFlattenModifierName : pf2eFlattenModifierName;
+	const modifierValue = computeFlatteningValue(actor);
+	await actor.addCustomModifier('all', modifierName, modifierValue, 'untyped');
 }
+
 async function unflattenActor(actor) {
 	const halfLevel = game.settings.get(settingsKey, "halflevel");
-	const modifierName = halfLevel ? pf2eHalfFlattenModifierName : pf2eFlattenModifierName
+	const modifierName = halfLevel ? pf2eHalfFlattenModifierName : pf2eFlattenModifierName;
 	const slug = modifierName.replace(lowerCaseThenUpperCaseRE, "$1-$2").toLowerCase().replace(/['’]/g, "").replace(nonWordCharacterRE, " ").trim().replace(/[-\s]+/g, "-")
 	await actor.removeCustomModifier('all', slug);
+}
+
+function computeFlatteningValue(actor) {
+	const halfLevel = game.settings.get(settingsKey, "halflevel");
+	if (actor.type === 'npc') {
+		return -1 * (halfLevel ? Math.max(Math.ceil(parseInt(actor?.system['details'].level.value) / 2), 0) : Math.max(parseInt(actor?.system['details'].level.value), 0));
+	}
+	if (actor.type === 'character' && game.settings.get(settingsKey, "halflevelPC")) {
+		return -1 * (Math.max(Math.ceil(parseInt(actor?.system['details'].level.value) / 2), 0));
+	}
+	return -1 * (halfLevel ? Math.max(Math.ceil(parseInt(actor?.system['details'].level.value) / 2), 0) : Math.max(parseInt(actor?.system['details'].level.value), 0));
 }
