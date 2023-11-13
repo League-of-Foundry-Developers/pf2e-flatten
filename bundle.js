@@ -1,7 +1,6 @@
 // This file has been modified from the original PF2e toolbox module.
 const settingsKey = "pf2e-flatten";
-const pf2eFlattenModifierName = 'Proficiency Without Level';
-const pf2eHalfFlattenModifierName = 'Half Level Proficiency';
+const pf2eModifierName = 'Flattened Level Proficiency';
 
 const wordCharacter = String.raw`[\p{Alphabetic}\p{Mark}\p{Decimal_Number}\p{Join_Control}]`
 	, nonWordCharacter = String.raw`[^\p{Alphabetic}\p{Mark}\p{Decimal_Number}\p{Join_Control}]`
@@ -11,34 +10,76 @@ const wordCharacter = String.raw`[\p{Alphabetic}\p{Mark}\p{Decimal_Number}\p{Joi
 	, upperCaseLetter = String.raw`\p{Uppercase_Letter}`
 	, lowerCaseThenUpperCaseRE = new RegExp(`(${lowerCaseLetter})(${upperCaseLetter}${nonWordBoundary})`, "gu");
 
+const RoundingModes = {
+	CEIL: {
+		ordinal: 0,
+		func: Math.ceil
+	},
+	FLOOR: {
+		ordinal: 1,
+		func: Math.floor
+	}
+}
+RoundingModes.properties = {
+	0: "CEIL",
+	1: "FLOOR"
+}
+RoundingModes.enumFromValue = function (ordinal) {
+	return RoundingModes.properties[ordinal];
+}
+
+const Multipliers = {
+	HALF: 0.5,
+	NONE: 1
+}
+
 Hooks.once("init", () => {
+	game.settings.register(settingsKey, "enabled", {
+		name: `${settingsKey}.settings.enabled.name`,
+		hint: `${settingsKey}.settings.enabled.hint`,
+		scope: "world",
+		config: true,
+		type: Boolean,
+		default: false
+	});
 	game.settings.register(settingsKey, "autoflatten", {
-		name: "pf2e-flatten.settings.autoflatten.name",
-		hint: "pf2e-flatten.settings.autoflatten.hint",
+		name: `${settingsKey}.settings.autoflatten.name`,
+		hint: `${settingsKey}.settings.autoflatten.hint`,
 		scope: "world",
 		config: true,
 		type: Boolean,
 		default: false
 	});
-	game.settings.register(settingsKey, "halflevel", {
-		name: "pf2e-flatten.settings.halflevel.name",
-		hint: "pf2e-flatten.settings.halflevel.hint",
+	game.settings.register(settingsKey, "multiplier", {
+		name: `${settingsKey}.settings.multiplier.name`,
+		hint: `${settingsKey}.settings.multiplier.hint`,
 		scope: "world",
 		config: true,
-		type: Boolean,
-		default: false
+		type: Number,
+		default: Multipliers.HALF,
+		choices: {
+			[Multipliers.HALF]: game.i18n.localize(`${settingsKey}.settings.multiplier.half`),
+			[Multipliers.NONE]: game.i18n.localize(`${settingsKey}.settings.multiplier.none`),
+		}
 	});
-	game.settings.register(settingsKey, "halflevelPC", {
-		name: "pf2e-flatten.settings.halflevelPC.name",
-		hint: "pf2e-flatten.settings.halflevelPC.hint",
+	game.settings.register(settingsKey, "roundingMode", {
+		name: `${settingsKey}.settings.roundingMode.name`,
+		hint: `${settingsKey}.settings.roundingMode.hint`,
 		scope: "world",
 		config: true,
-		type: Boolean,
-		default: false
+		type: Number,
+		default: RoundingModes.CEIL.ordinal,
+		choices: {
+			[RoundingModes.CEIL.ordinal]: game.i18n.localize(`${settingsKey}.settings.roundingMode.ceil`),
+			[RoundingModes.FLOOR.ordinal]: game.i18n.localize(`${settingsKey}.settings.roundingMode.floor`),
+		}
 	});
 });
 
 Hooks.on('renderActorDirectory', async (cc, [html], opts) => {
+	if (!moduleEnabled()) {
+		return;
+	}
 	if (!game.user.isGM) {
 		return;
 	}
@@ -74,7 +115,7 @@ Hooks.on('renderActorDirectory', async (cc, [html], opts) => {
 				let actorId = $(li).data('document-id')
 				return game.actors.get(actorId);
 			})
-			.filter(actor => canFlatten(actor))
+			.filter(actor => isUpdatable(actor) && !hasModifier(actor))
 		ui.notifications.info(`Flattening ${actors.length} actors`);
 		for (let a of actors) {
 			await flattenActor(a);
@@ -92,7 +133,7 @@ Hooks.on('renderActorDirectory', async (cc, [html], opts) => {
 				let actorId = $(li).data('document-id')
 				return game.actors.get(actorId);
 			})
-			.filter(actor => canUnflatten(actor));
+			.filter(actor => isUpdatable(actor) && hasModifier(actor));
 		ui.notifications.info(`Un-flattening ${actors.length} actors`);
 		for (let a of actors) {
 			await unflattenActor(a);
@@ -102,13 +143,19 @@ Hooks.on('renderActorDirectory', async (cc, [html], opts) => {
 });
 
 Hooks.on('createActor', async (actor) => {
-	if (game.settings.get(settingsKey, "autoflatten") === true) {
+	if (!moduleEnabled()) {
+		return;
+	}
+	if (isUpdatable(actor) && game.settings.get(settingsKey, "autoflatten") === true) {
 		await flattenActor(actor);
 	}
 });
 
 Hooks.on('updateActor', async (actor) => {
-	if (hasModifier(actor) && getFlatteningValue(actor) !== computeFlatteningValue(actor)) {
+	if (!moduleEnabled()) {
+		return;
+	}
+	if (isUpdatable(actor) && hasModifier(actor) && getFlatteningValue(actor) !== computeFlatteningValue(actor)) {
 		await unflattenActor(actor);
 		await flattenActor(actor);
 		ui.notifications.info(`Re applied flattening for actor ${actor?.name} (${actor?.id})`)
@@ -116,13 +163,16 @@ Hooks.on('updateActor', async (actor) => {
 });
 
 Hooks.on('getActorDirectoryEntryContext', async (html, entryOptions) => {
+	if (!moduleEnabled()) {
+		return;
+	}
 	entryOptions.unshift({
 		name: 'PF2e Flatten NPC',
 		icon: '<i class="fas fa-level-down-alt"></i>',
 		condition: ($li) => {
 			const id = $li.data('document-id');
 			const actor = game.actors.get(id);
-			return canFlatten(actor);
+			return moduleEnabled() && isUpdatable(actor) && !hasModifier(actor);
 		},
 		callback: async ($li) => {
 			const id = $li.data('document-id');
@@ -136,7 +186,7 @@ Hooks.on('getActorDirectoryEntryContext', async (html, entryOptions) => {
 		condition: ($li) => {
 			const id = $li.data('document-id');
 			const actor = game.actors.get(id);
-			return canUnflatten(actor);
+			return moduleEnabled() && isUpdatable(actor) && hasModifier(actor);
 		},
 		callback: async ($li) => {
 			const id = $li.data('document-id');
@@ -146,22 +196,12 @@ Hooks.on('getActorDirectoryEntryContext', async (html, entryOptions) => {
 	});
 });
 
-function canFlatten(actor) {
-	if (game.settings.get(settingsKey, "halflevelPC")) {
-		return !hasModifier(actor);
-	}
-	else {
-		return actor?.data.type === 'npc' && !hasModifier(actor);
-	}
+function moduleEnabled() {
+	return game.settings.get(settingsKey, "enabled");
 }
 
-function canUnflatten(actor) {
-	if (game.settings.get(settingsKey, "halflevelPC")) {
-		return hasModifier(actor);
-	}
-	else {
-		return actor?.data.type === 'npc' && hasModifier(actor);
-	}
+function isUpdatable(actor) {
+	return actor.type === 'character' || actor.type === 'npc';
 }
 
 function hasModifier(actor) {
@@ -169,7 +209,7 @@ function hasModifier(actor) {
 	if (data.customModifiers && data.customModifiers.all) {
 		const all = data.customModifiers.all;
 		for (const modifier of all) {
-			if (modifier.label === pf2eFlattenModifierName || modifier.label === pf2eHalfFlattenModifierName) {
+			if (modifier.label === pf2eModifierName) {
 				return true;
 			}
 		}
@@ -182,7 +222,7 @@ function getFlatteningValue(actor) {
 	if (data.customModifiers && data.customModifiers.all) {
 		const all = data.customModifiers.all;
 		for (const modifier of all) {
-			if (modifier.label === pf2eFlattenModifierName || modifier.label === pf2eHalfFlattenModifierName) {
+			if (modifier.label === pf2eModifierName) {
 				return modifier.modifier;
 			}
 		}
@@ -191,26 +231,17 @@ function getFlatteningValue(actor) {
 };
 
 async function flattenActor(actor) {
-	const halfLevel = game.settings.get(settingsKey, "halflevel");
-	const modifierName = halfLevel ? pf2eHalfFlattenModifierName : pf2eFlattenModifierName;
 	const modifierValue = computeFlatteningValue(actor);
-	await actor.addCustomModifier('all', modifierName, modifierValue, 'untyped');
+	await actor.addCustomModifier('all', pf2eModifierName, modifierValue, 'untyped');
 }
 
 async function unflattenActor(actor) {
-	const halfLevel = game.settings.get(settingsKey, "halflevel");
-	const modifierName = halfLevel ? pf2eHalfFlattenModifierName : pf2eFlattenModifierName;
-	const slug = modifierName.replace(lowerCaseThenUpperCaseRE, "$1-$2").toLowerCase().replace(/['’]/g, "").replace(nonWordCharacterRE, " ").trim().replace(/[-\s]+/g, "-")
+	const slug = pf2eModifierName.replace(lowerCaseThenUpperCaseRE, "$1-$2").toLowerCase().replace(/['’]/g, "").replace(nonWordCharacterRE, " ").trim().replace(/[-\s]+/g, "-")
 	await actor.removeCustomModifier('all', slug);
 }
 
 function computeFlatteningValue(actor) {
-	const halfLevel = game.settings.get(settingsKey, "halflevel");
-	if (actor.type === 'npc') {
-		return -1 * (halfLevel ? Math.max(Math.ceil(parseInt(actor?.system['details'].level.value) / 2), 0) : Math.max(parseInt(actor?.system['details'].level.value), 0));
-	}
-	if (actor.type === 'character' && game.settings.get(settingsKey, "halflevelPC")) {
-		return -1 * (Math.max(Math.ceil(parseInt(actor?.system['details'].level.value) / 2), 0));
-	}
-	return -1 * (halfLevel ? Math.max(Math.ceil(parseInt(actor?.system['details'].level.value) / 2), 0) : Math.max(parseInt(actor?.system['details'].level.value), 0));
+	const multiplier = game.settings.get(settingsKey, "multiplier");
+	const roundingMode = RoundingModes[RoundingModes.enumFromValue(game.settings.get(settingsKey, "roundingMode"))]
+	return -1 * Math.max(roundingMode.func(parseInt(actor?.system['details'].level.value * multiplier), 0));
 }
