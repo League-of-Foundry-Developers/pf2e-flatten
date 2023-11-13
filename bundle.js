@@ -254,5 +254,5 @@ async function unflattenActor(actor) {
 function computeFlatteningValue(actor) {
 	const multiplier = game.settings.get(settingsKey, "multiplier");
 	const roundingMode = RoundingModes[RoundingModes.enumFromValue(game.settings.get(settingsKey, "roundingMode"))]
-	return -1 * Math.max(roundingMode.func(parseInt(actor?.system['details'].level.value * multiplier), 0));
+	return -1 * Math.max(roundingMode.func(parseInt(actor?.system['details'].level.value) * multiplier, 0));
 }
