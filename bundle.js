@@ -77,9 +77,6 @@ Hooks.once("init", () => {
 });
 
 Hooks.on('renderActorDirectory', async (cc, [html], opts) => {
-	if (!moduleEnabled()) {
-		return;
-	}
 	if (!game.user.isGM) {
 		return;
 	}
@@ -108,6 +105,9 @@ Hooks.on('renderActorDirectory', async (cc, [html], opts) => {
 	flattenButton.addEventListener('click', async (ev) => {
 		ev.preventDefault();
 		ev.stopPropagation();
+		if (!moduleEnabled()) {
+			return;
+		}
 
 		let actors = Array.from(
 			document.querySelector('#actors').querySelectorAll('.actor'),
@@ -126,6 +126,9 @@ Hooks.on('renderActorDirectory', async (cc, [html], opts) => {
 	unflattenButton.addEventListener('click', async (ev) => {
 		ev.preventDefault();
 		ev.stopPropagation();
+		if (!moduleEnabled()) {
+			return;
+		}
 
 		let actors = Array.from(
 			document.querySelector('#actors').querySelectorAll('.actor'),
