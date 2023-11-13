@@ -50,6 +50,14 @@ Hooks.once("init", () => {
 		type: Boolean,
 		default: false
 	});
+	game.settings.register(settingsKey, "flattenPcs", {
+		name: `${settingsKey}.settings.flattenPcs.name`,
+		hint: `${settingsKey}.settings.flattenPcs.hint`,
+		scope: "world",
+		config: true,
+		type: Boolean,
+		default: false
+	});
 	game.settings.register(settingsKey, "multiplier", {
 		name: `${settingsKey}.settings.multiplier.name`,
 		hint: `${settingsKey}.settings.multiplier.hint`,
@@ -204,7 +212,7 @@ function moduleEnabled() {
 }
 
 function isUpdatable(actor) {
-	return actor.type === 'character' || actor.type === 'npc';
+	return actor.type === 'npc' || (game.settings.get(settingsKey, "flattenPcs") && actor.type === 'character');
 }
 
 function hasModifier(actor) {
