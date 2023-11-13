@@ -11,7 +11,7 @@ const wordCharacter = String.raw`[\p{Alphabetic}\p{Mark}\p{Decimal_Number}\p{Joi
 	, upperCaseLetter = String.raw`\p{Uppercase_Letter}`
 	, lowerCaseThenUpperCaseRE = new RegExp(`(${lowerCaseLetter})(${upperCaseLetter}${nonWordBoundary})`, "gu");
 
-function registerSettings() {
+Hooks.once("init", () => {
 	game.settings.register(settingsKey, "autoflatten", {
 		name: "pf2e-flatten.settings.autoflatten.name",
 		hint: "pf2e-flatten.settings.autoflatten.hint",
@@ -19,7 +19,7 @@ function registerSettings() {
 		config: true,
 		type: Boolean,
 		default: false
-	}),
+	});
 	game.settings.register(settingsKey, "halflevel", {
 		name: "pf2e-flatten.settings.halflevel.name",
 		hint: "pf2e-flatten.settings.halflevel.hint",
@@ -27,7 +27,7 @@ function registerSettings() {
 		config: true,
 		type: Boolean,
 		default: false
-	}),
+	});
 	game.settings.register(settingsKey, "halflevelPC", {
 		name: "pf2e-flatten.settings.halflevelPC.name",
 		hint: "pf2e-flatten.settings.halflevelPC.hint",
@@ -35,95 +35,161 @@ function registerSettings() {
 		config: true,
 		type: Boolean,
 		default: false
-	})
-};
-
-
-Hooks.once("init", () => {
-	registerSettings();
+	});
 });
 
-Hooks.on('createActor', AutoFlattenNPC);
-Hooks.on('getActorDirectoryEntryContext', onFlattenProficiencyContextHook);
-Hooks.on('renderActorDirectory', addFlattenUnflattenButton);
+Hooks.on('renderActorDirectory', async (cc, [html], opts) => {
+	if (!game.user.isGM) {
+		return;
+	}
 
-async function addFlattenUnflattenButton(cc, [html], opts) {
-	console.log(cc, html, opts);
-}
+	const buttons = html.querySelector('header .action-buttons');
 
-async function AutoFlattenNPC(li) {
+	const flattenButton = document.createElement('button');
+	const unflattenButton = document.createElement('button');
+
+	if (game.release.generation >= 11) {
+		flattenButton.classList.add('ic-wide')
+		unflattenButton.classList.add('ic-wide')
+	}
+
+	flattenButton.classList.add('flatten-actors');
+	flattenButton.type = 'button';
+	flattenButton.innerHTML = `<i class="fa-solid fa-level-down-alt"></i> Flatten All`;
+
+	unflattenButton.classList.add('flatten-actors');
+	unflattenButton.type = 'button';
+	unflattenButton.innerHTML = `<i class="fa-solid fa-level-up-alt"></i> Unflatten All`;
+
+	buttons.append(flattenButton);
+	buttons.append(unflattenButton);
+
+	flattenButton.addEventListener('click', async (ev) => {
+		ev.preventDefault();
+		ev.stopPropagation();
+
+		let actors = Array.from(
+			document.querySelector('#actors').querySelectorAll('.actor'),
+			li => {
+				let actorId = $(li).data('document-id')
+				return game.actors.get(actorId);
+			})
+			.filter(actor => canFlatten(actor))
+		ui.notifications.info(`Flattening ${actors.length} actors`);
+		for (let a of actors) {
+			await flattenActor(a);
+		}
+		ui.notifications.info(`Finished flattening ${actors.length} actors`);
+	});
+
+	unflattenButton.addEventListener('click', async (ev) => {
+		ev.preventDefault();
+		ev.stopPropagation();
+
+		let actors = Array.from(
+			document.querySelector('#actors').querySelectorAll('.actor'),
+			li => {
+				let actorId = $(li).data('document-id')
+				return game.actors.get(actorId);
+			})
+			.filter(actor => canUnflatten(actor));
+		ui.notifications.info(`Un-flattening ${actors.length} actors`);
+		for (let a of actors) {
+			await unflattenActor(a);
+		}
+		ui.notifications.info(`Finished un-flattening ${actors.length} actors`);
+	});
+});
+
+Hooks.on('createActor', async li => {
 	if (game.settings.get(settingsKey, "autoflatten") === true) {
 		const id = li._id;
 		const actor = game.actors.get(id);
-		const halfLevel = game.settings.get(settingsKey, "halflevel");
-		const modifierName = halfLevel ? pf2eHalfFlattenModifierName : pf2eFlattenModifierName
-		if (actor.type === 'npc') {
-			const level = halfLevel ? Math.max(Math.ceil(parseInt(actor?.system['details'].level.value) / 2), 0) : Math.max(parseInt(actor?.system['details'].level.value), 0);
-			await actor.addCustomModifier('all', modifierName, -level, 'untyped');
+		await flattenActor(actor);
+	}
+});
+
+// Hoosk.on('updateDocument', async (document, change, options, userId) => {
+// 	console.log(document, change, options, userId);
+// });
+
+Hooks.on('getActorDirectoryEntryContext', async (html, entryOptions) => {
+	entryOptions.unshift({
+		name: 'PF2e Flatten NPC',
+		icon: '<i class="fas fa-level-down-alt"></i>',
+		condition: ($li) => {
+			const id = $li.data('document-id');
+			const actor = game.actors.get(id);
+			return canFlatten(actor);
+		},
+		callback: async ($li) => {
+			const id = $li.data('document-id');
+			const actor = game.actors.get(id);
+			await flattenActor(actor);
 		}
-		if (actor.type === 'character' && game.settings.get(settingsKey, "halflevelPC")) {
-			const level = Math.max(Math.ceil(parseInt(actor?.system['details'].level.value) / 2), 0);
-			await actor.addCustomModifier('all', modifierName, -level, 'untyped');
-		}
+	});
+	entryOptions.unshift({
+		name: 'PF2e Unflatten NPC',
+		icon: '<i class="fas fa-level-up-alt"></i>',
+		condition: ($li) => {
+			const id = $li.data('document-id');
+			const actor = game.actors.get(id);
+			return canUnflatten(actor);
+		},
+		callback: async ($li) => {
+			const id = $li.data('document-id');
+			const actor = game.actors.get(id);
+			await unflattenActor(actor);
+		},
+	});
+});
+
+function canFlatten(actor) {
+	if (game.settings.get(settingsKey, "halflevelPC")) {
+		return !hasModifier(actor);
+	}
+	else {
+		return actor?.data.type === 'npc' && !hasModifier(actor);
 	}
 }
 
-async function onFlattenProficiencyContextHook(html, buttons) {
-	const hasModifier = (actor) => {
-		const data = actor.system;
-		if (data.customModifiers && data.customModifiers.all) {
-			const all = data.customModifiers.all;
-			for (const modifier of all) {
-				if (modifier.label === pf2eFlattenModifierName || modifier.label === pf2eHalfFlattenModifierName) {
-					return true;
-				}
-			}
-		}
-		return false;
-	};
+function canUnflatten(actor) {
+	if (game.settings.get(settingsKey, "halflevelPC")) {
+		return hasModifier(actor);
+	}
+	else {
+		return actor?.data.type === 'npc' && hasModifier(actor);
+	}
+}
 
-	buttons.unshift({
-		name: 'PF2e Flatten NPC',
-		icon: '<i class="fas fa-level-down-alt"></i>',
-		condition: (li) => {
-			const id = li.data('document-id');
-			const actor = game.actors.get(id);
-			if (game.settings.get(settingsKey, "halflevelPC")) {
-				return !hasModifier(actor);
+function hasModifier(actor) {
+	const data = actor.system;
+	if (data.customModifiers && data.customModifiers.all) {
+		const all = data.customModifiers.all;
+		for (const modifier of all) {
+			if (modifier.label === pf2eFlattenModifierName || modifier.label === pf2eHalfFlattenModifierName) {
+				return true;
 			}
-			else {
-				return actor?.data.type === 'npc' && !hasModifier(actor);
-			}
-		},
-		callback: async (li) => {
-			const id = li.data('document-id');
-			const actor = game.actors.get(id);
-			const halfLevel = game.settings.get(settingsKey, "halflevel");
-			const level = halfLevel ? Math.max(Math.ceil(parseInt(actor?.system['details'].level.value) / 2), 0) : Math.max(parseInt(actor?.system['details'].level.value), 0);
-			const modifierName = halfLevel ? pf2eHalfFlattenModifierName : pf2eFlattenModifierName
-			await actor.addCustomModifier('all', modifierName, -level, 'untyped');
 		}
-	});
-	buttons.unshift({
-		name: 'PF2e Unflatten NPC',
-		icon: '<i class="fas fa-level-up-alt"></i>',
-		condition: (li) => {
-			const id = li.data('document-id');
-			const actor = game.actors.get(id);
-			if (game.settings.get(settingsKey, "halflevelPC")) {
-				return hasModifier(actor);
-			}
-			else {
-				return actor?.data.type === 'npc' && hasModifier(actor);
-			}
-		},
-		callback: async (li) => {
-			const id = li.data('document-id');
-			const actor = game.actors.get(id);
-			const halfLevel = game.settings.get(settingsKey, "halflevel");
-			const modifierName = halfLevel ? pf2eHalfFlattenModifierName : pf2eFlattenModifierName
-			const slug = modifierName.replace(lowerCaseThenUpperCaseRE, "$1-$2").toLowerCase().replace(/['’]/g, "").replace(nonWordCharacterRE, " ").trim().replace(/[-\s]+/g, "-")
-			await actor.removeCustomModifier('all', slug);
-		},
-	});
+	}
+	return false;
+};
+
+async function flattenActor(actor) {
+	const halfLevel = game.settings.get(settingsKey, "halflevel");
+	const modifierName = halfLevel ? pf2eHalfFlattenModifierName : pf2eFlattenModifierName
+	if (actor.type === 'npc') {
+		const level = halfLevel ? Math.max(Math.ceil(parseInt(actor?.system['details'].level.value) / 2), 0) : Math.max(parseInt(actor?.system['details'].level.value), 0);
+		await actor.addCustomModifier('all', modifierName, -level, 'untyped');
+	}
+	if (actor.type === 'character' && game.settings.get(settingsKey, "halflevelPC")) {
+		const level = Math.max(Math.ceil(parseInt(actor?.system['details'].level.value) / 2), 0);
+		await actor.addCustomModifier('all', modifierName, -level, 'untyped');
+	}
+}
+async function unflattenActor(actor) {
+	const halfLevel = game.settings.get(settingsKey, "halflevel");
+	const modifierName = halfLevel ? pf2eHalfFlattenModifierName : pf2eFlattenModifierName
+	const slug = modifierName.replace(lowerCaseThenUpperCaseRE, "$1-$2").toLowerCase().replace(/['’]/g, "").replace(nonWordCharacterRE, " ").trim().replace(/[-\s]+/g, "-")
+	await actor.removeCustomModifier('all', slug);
 }
