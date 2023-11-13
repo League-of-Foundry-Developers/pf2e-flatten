@@ -64,7 +64,7 @@ Hooks.once("init", () => {
 		scope: "world",
 		config: true,
 		type: Number,
-		default: Multipliers.HALF,
+		default: Multipliers.NONE,
 		choices: {
 			[Multipliers.HALF]: game.i18n.localize(`${settingsKey}.settings.multiplier.half`),
 			[Multipliers.NONE]: game.i18n.localize(`${settingsKey}.settings.multiplier.none`),
