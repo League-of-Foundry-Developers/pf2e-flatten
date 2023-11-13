@@ -2,12 +2,12 @@
     "pf2e-flatten": {
         "settings": {
             "enabled": {
-                "name": "Enable Flatten NPCs",
+                "name": "Enable Flatten for PCs and NPCs",
                 "hint": "Enable to use the module."
             },
             "autoflatten": {
-                "name": "Automatically Flatten NPCs",
-                "hint": "If enabled, any new NPCs dragged in from the compendiums will automatically be flattened."
+                "name": "Atumatically Flatten for PCs and NPCs",
+                "hint": "If enabled, any new PCs or NPCs dragged in from the compendiums will automatically be flattened."
             },
             "multiplier": {
                 "name": "Reduced proficiency modes",
