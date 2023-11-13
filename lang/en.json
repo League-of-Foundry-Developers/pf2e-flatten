@@ -6,7 +6,7 @@
                 "hint": "Enable to use the module."
             },
             "autoflatten": {
-                "name": "Atumatically Flatten for PCs and NPCs",
+                "name": "Automatically Flatten for PCs and NPCs",
                 "hint": "If enabled, any new PCs or NPCs dragged in from the compendiums will automatically be flattened."
             },
             "multiplier": {
