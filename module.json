@@ -1,6 +1,6 @@
 {
     "id": "pf2e-flatten",
-    "version": "0.4.1",
+    "version": "0.5.2",
     "title": "PF2e Proficiency Without Level for NPCs",
     "description": "A utility to flatten NPCs to make them compatible with the proficiency without level variant rule. Includes toggleable automation for NPCs dragged from compendiums.",
     "compatibility":{
