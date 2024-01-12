@@ -40,7 +40,7 @@ Hooks.once("init", () => {
 		scope: "world",
 		config: true,
 		type: Boolean,
-		default: false
+		default: true
 	});
 	game.settings.register(settingsKey, "autoflatten", {
 		name: `${settingsKey}.settings.autoflatten.name`,
@@ -85,6 +85,9 @@ Hooks.once("init", () => {
 });
 
 Hooks.on('renderActorDirectory', async (cc, [html], opts) => {
+	if (!moduleEnabled()) {
+		return;
+	}
 	if (!game.user.isGM) {
 		return;
 	}

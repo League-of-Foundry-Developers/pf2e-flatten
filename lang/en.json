@@ -3,7 +3,7 @@
         "settings": {
             "enabled": {
                 "name": "Enable Flatten for PCs and NPCs",
-                "hint": "Enable to use the module."
+                "hint": "Check to use the module. After enabling remember to refresh your page to see the general flattening buttons."
             },
             "autoflatten": {
                 "name": "Automatically Flatten for PCs and NPCs",
@@ -11,19 +11,19 @@
             },
             "multiplier": {
                 "name": "Reduced proficiency modes",
-                "hint": "Select how much of the level will be used with proficiency. Unflatten and flatten all actors to apply the update.",
+                "hint": "Select how much of the level will be used with proficiency. Un-flatten and flatten all actors to apply the update.",
                 "half": "Half level proficiency",
                 "none": "No level proficiency"
             },
             "roundingMode": {
                 "name": "Rounding mode for calculation",
-                "hint": "Select rounding mode for calculation of flattening value. Unflatten and flatten all actors to apply the update.",
+                "hint": "Select rounding mode for calculation of flattening value. Un-flatten and flatten all actors to apply the update.",
                 "ceil": "Ceil",
                 "floor": "Floor"
             },
             "flattenPcs": {
                 "name": "Enable flattening for PCs",
-                "hint": "Enable the flattening functions ."
+                "hint": "Enable the flattening functions for PCs."
             }
         }
     }
