@@ -8,12 +8,7 @@
 			"halflevel": {
 				"name": "Half Level Proficiency",
 				"hint": "If enabled, all of the flattening functions will use half level, rounded up rather than proficiency without level."
-			},
-			"halflevelPC": {
-				"name": "Half Level Proficiency for PCs",
-				"hint": "If enabled, all of the flattening functions will work for PCs."
 			}
 			}
 		}
 	}
-
