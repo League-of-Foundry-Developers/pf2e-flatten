@@ -34,14 +34,6 @@ const Multipliers = {
 }
 
 Hooks.once("init", () => {
-	game.settings.register(settingsKey, "enabled", {
-		name: `${settingsKey}.settings.enabled.name`,
-		hint: `${settingsKey}.settings.enabled.hint`,
-		scope: "world",
-		config: true,
-		type: Boolean,
-		default: true
-	});
 	game.settings.register(settingsKey, "autoflatten", {
 		name: `${settingsKey}.settings.autoflatten.name`,
 		hint: `${settingsKey}.settings.autoflatten.hint`,
@@ -84,15 +76,20 @@ Hooks.once("init", () => {
 	});
 });
 
-Hooks.on('renderActorDirectory', async (cc, [html], opts) => {
-	if (!moduleEnabled()) {
+Hooks.on('renderActorDirectory', async (cc, html, opts) => {
+	if (!game.user.isGM) {
 		return;
 	}
-	if (!game.user.isGM) {
+	if (html.querySelector('[data-ref=flatten-row]')){
 		return;
 	}
 
 	const buttons = html.querySelector('header .action-buttons');
+	const flattenRow = document.createElement('div');
+	flattenRow.classList.add("header-actions");
+	flattenRow.classList.add("action-buttons")
+	flattenRow.classList.add("flexrow");
+	flattenRow.dataset.ref = "flatten-row"
 
 	const flattenButton = document.createElement('button');
 	const unflattenButton = document.createElement('button');
@@ -110,15 +107,14 @@ Hooks.on('renderActorDirectory', async (cc, [html], opts) => {
 	unflattenButton.type = 'button';
 	unflattenButton.innerHTML = `<i class="fa-solid fa-level-up-alt"></i> Unflatten All`;
 
-	buttons.append(flattenButton);
-	buttons.append(unflattenButton);
+	
+	flattenRow.append(flattenButton);
+	flattenRow.append(unflattenButton);
+	buttons.after(flattenRow);
 
 	flattenButton.addEventListener('click', async (ev) => {
 		ev.preventDefault();
 		ev.stopPropagation();
-		if (!moduleEnabled()) {
-			return;
-		}
 
 		let actors = Array.from(
 			document.querySelector('#actors').querySelectorAll('.actor'),
@@ -137,9 +133,6 @@ Hooks.on('renderActorDirectory', async (cc, [html], opts) => {
 	unflattenButton.addEventListener('click', async (ev) => {
 		ev.preventDefault();
 		ev.stopPropagation();
-		if (!moduleEnabled()) {
-			return;
-		}
 
 		let actors = Array.from(
 			document.querySelector('#actors').querySelectorAll('.actor'),
@@ -157,18 +150,12 @@ Hooks.on('renderActorDirectory', async (cc, [html], opts) => {
 });
 
 Hooks.on('createActor', async (actor) => {
-	if (!moduleEnabled()) {
-		return;
-	}
 	if (isUpdatable(actor) && game.settings.get(settingsKey, "autoflatten") === true) {
 		await flattenActor(actor);
 	}
 });
 
 Hooks.on('updateActor', async (actor) => {
-	if (!moduleEnabled()) {
-		return;
-	}
 	if (isUpdatable(actor) && hasModifier(actor) && getFlatteningValue(actor) !== computeFlatteningValue(actor)) {
 		await unflattenActor(actor);
 		await flattenActor(actor);
@@ -209,10 +196,6 @@ Hooks.on('getActorDirectoryEntryContext', async (html, entryOptions) => {
 		},
 	});
 });
-
-function moduleEnabled() {
-	return game.settings.get(settingsKey, "enabled");
-}
 
 function isUpdatable(actor) {
 	return actor.type === 'npc' || (game.settings.get(settingsKey, "flattenPcs") && actor.type === 'character');
