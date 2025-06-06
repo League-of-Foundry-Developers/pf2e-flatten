@@ -1,18 +1,18 @@
 {
-  "version": "0.6.0",
-  "title": "PF2e Proficiency Without Level for NPCs",
-  "description": "A utility to flatten NPCs to make them compatible with the proficiency without level variant rule. Includes toggleable automation for NPCs dragged from compendiums.",
-  "compatibility": {
+  "version": "0.6.1",
+  "title": "PF2e Flatten Proficiency Level bonus for PCs and NPCs",
+  "id": "pf2e-flatten",
+  "description": "A utility to flatten NPCs to make them compatible with the proficiency without level variant rule. Includes toggleable automation for NPCs dragged from compendiums. You can also flatten PCs and NPCs using half the level proficiency.",
+  "compatibility":{
     "minimum": "10",
-    "verified": "12",
-    "maximum": "12"
+    "verified": "13",
+    "maximum": "13"
   },
   "languages": [
     {
       "lang": "en",
       "name": "English",
-      "path": "lang/en.json",
-      "flags": {}
+      "path": "lang/en.json"
     }
   ],
   "esmodules": [
@@ -31,7 +31,6 @@
     ]
   },
   "manifest": "https://raw.githubusercontent.com/League-of-Foundry-Developers/pf2e-flatten/main/module.json",
-  "download": "https://github.com/League-of-Foundry-Developers/pf2e-flatten/archive/refs/tags/0.6.0.zip",
-  "url": "https://github.com/League-of-Foundry-Developers/pf2e-flatten/",
-  "id": "pf2e-flatten"
+  "download": "https://github.com/League-of-Foundry-Developers/pf2e-flatten/archive/refs/tags/V0.5.1.zip",
+  "url": "https://github.com/League-of-Foundry-Developers/pf2e-flatten/"
 }
