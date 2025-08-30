@@ -116,13 +116,7 @@ Hooks.on('renderActorDirectory', async (cc, html, opts) => {
 		ev.preventDefault();
 		ev.stopPropagation();
 
-		let actors = Array.from(
-			document.querySelector('#actors').querySelectorAll('.actor'),
-			li => {
-				let actorId = $(li).data('document-id')
-				return game.actors.get(actorId);
-			})
-			.filter(actor => isUpdatable(actor) && !hasModifier(actor))
+		let actors = game.actors.filter(actor => isUpdatable(actor) && !hasModifier(actor))
 		ui.notifications.info(`Flattening ${actors.length} actors`);
 		for (let a of actors) {
 			await flattenActor(a);
@@ -134,13 +128,7 @@ Hooks.on('renderActorDirectory', async (cc, html, opts) => {
 		ev.preventDefault();
 		ev.stopPropagation();
 
-		let actors = Array.from(
-			document.querySelector('#actors').querySelectorAll('.actor'),
-			li => {
-				let actorId = $(li).data('document-id')
-				return game.actors.get(actorId);
-			})
-			.filter(actor => isUpdatable(actor) && hasModifier(actor));
+		let actors = game.actors.filter(actor => isUpdatable(actor) && hasModifier(actor));
 		ui.notifications.info(`Un-flattening ${actors.length} actors`);
 		for (let a of actors) {
 			await unflattenActor(a);
@@ -163,38 +151,40 @@ Hooks.on('updateActor', async (actor) => {
 	}
 });
 
-Hooks.on('getActorDirectoryEntryContext', async (html, entryOptions) => {
-	if (!moduleEnabled()) {
-		return;
+Hooks.on("init", () => {
+	const f = ActorDirectory.prototype._getEntryContextOptions;
+	ActorDirectory.prototype._getEntryContextOptions = function(){
+		const entries = (f.bind(this))();
+		entries.unshift({
+			name: 'PF2e Flatten NPC',
+			icon: '<i class="fas fa-level-down-alt"></i>',
+			condition: ($li) => {
+				const id = $li.dataset.entryId;
+				const actor = game.actors.get(id);
+				return isUpdatable(actor) && !hasModifier(actor);
+			},
+			callback: async ($li) => {
+				const id = $li.dataset.entryId;
+				const actor = game.actors.get(id);
+				await flattenActor(actor);
+			}
+		});
+		entries.unshift({
+			name: 'PF2e Unflatten NPC',
+			icon: '<i class="fas fa-level-up-alt"></i>',
+			condition: ($li) => {
+				const id = $li.dataset.entryId;
+				const actor = game.actors.get(id);
+				return isUpdatable(actor) && hasModifier(actor);
+			},
+			callback: async ($li) => {
+				const id = $li.dataset.entryId;
+				const actor = game.actors.get(id);
+				await unflattenActor(actor);
+			},
+		});
+		return entries;
 	}
-	entryOptions.unshift({
-		name: 'PF2e Flatten NPC',
-		icon: '<i class="fas fa-level-down-alt"></i>',
-		condition: ($li) => {
-			const id = $li.data('document-id');
-			const actor = game.actors.get(id);
-			return moduleEnabled() && isUpdatable(actor) && !hasModifier(actor);
-		},
-		callback: async ($li) => {
-			const id = $li.data('document-id');
-			const actor = game.actors.get(id);
-			await flattenActor(actor);
-		}
-	});
-	entryOptions.unshift({
-		name: 'PF2e Unflatten NPC',
-		icon: '<i class="fas fa-level-up-alt"></i>',
-		condition: ($li) => {
-			const id = $li.data('document-id');
-			const actor = game.actors.get(id);
-			return moduleEnabled() && isUpdatable(actor) && hasModifier(actor);
-		},
-		callback: async ($li) => {
-			const id = $li.data('document-id');
-			const actor = game.actors.get(id);
-			await unflattenActor(actor);
-		},
-	});
 });
 
 function isUpdatable(actor) {
