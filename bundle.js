@@ -152,6 +152,8 @@ Hooks.on('updateActor', async (actor) => {
 });
 
 Hooks.on("init", () => {
+	// v14 uses the public context-menu hook below instead of the legacy global.
+	if (game.release.generation >= 14) return;
 	const f = ActorDirectory.prototype._getEntryContextOptions;
 	ActorDirectory.prototype._getEntryContextOptions = function(){
 		const entries = (f.bind(this))();
@@ -187,8 +189,32 @@ Hooks.on("init", () => {
 	}
 });
 
+// v14 context menus use label/visible/onClick, and pass the target as
+// the second onClick argument. Use the public hook rather than a prototype patch.
+Hooks.on("getActorContextOptions", (application, entries) => {
+	if (game.release.generation < 14 || !game.user.isGM || application.collection !== game.actors) return;
+	const getActor = target => game.actors.get(target.dataset.entryId);
+	entries.unshift({
+		label: 'PF2e Flatten NPC',
+		icon: 'fa-solid fa-level-down-alt',
+		visible: target => isUpdatable(getActor(target)) && !hasModifier(getActor(target)),
+		onClick: async (event, target) => {
+			const actor = getActor(target);
+			if (isUpdatable(actor) && !hasModifier(actor)) await flattenActor(actor);
+		}
+	}, {
+		label: 'PF2e Unflatten NPC',
+		icon: 'fa-solid fa-level-up-alt',
+		visible: target => isUpdatable(getActor(target)) && hasModifier(getActor(target)),
+		onClick: async (event, target) => {
+			const actor = getActor(target);
+			if (isUpdatable(actor) && hasModifier(actor)) await unflattenActor(actor);
+		}
+	});
+});
+
 function isUpdatable(actor) {
-	return actor.type === 'npc' || (game.settings.get(settingsKey, "flattenPcs") && actor.type === 'character');
+	return !!actor && (actor.type === 'npc' || (game.settings.get(settingsKey, "flattenPcs") && actor.type === 'character'));
 }
 
 function hasModifier(actor) {
